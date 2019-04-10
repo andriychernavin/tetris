@@ -1,0 +1,26 @@
+﻿<Window x:Class="Tetris.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Tetris"
+        xmlns:properties="clr-namespace:Tetris.Properties"
+        mc:Ignorable="d"
+        Title="Tetris 2019" Height="450" Width="800" Loaded="Window_Loaded" Closing="Window_Closing">
+    <Grid>
+        <local:TetrisControl x:Name="Tetris" 
+            TankWidth="{Binding Source={x:Static properties:Settings.Default}, Path=TankWidth}" 
+            TankHeight="{Binding Source={x:Static properties:Settings.Default}, Path=TankHeight}" 
+            FigureSet="{Binding Source={x:Static properties:Settings.Default}, Path=FigureSet}" 
+            ColorSet="{Binding Source={x:Static properties:Settings.Default}, Path=ColorSet}" 
+            HorizontalAlignment="Center" VerticalAlignment="Center">
+            <local:TetrisControl.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="About" Click="MenuItemAbout_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Reset settings" Click="MenuItemReset_Click"/>
+                </ContextMenu>
+            </local:TetrisControl.ContextMenu>
+        </local:TetrisControl>
+    </Grid>
+</Window>   

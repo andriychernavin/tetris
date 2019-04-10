@@ -1,0 +1,128 @@
+﻿<UserControl x:Name="MainControl" x:Class="Tetris.TetrisControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Tetris"
+             xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="400" Loaded="UserControl_Loaded"
+             UseLayoutRounding="True" Focusable="True"
+             LostKeyboardFocus="MainControl_LostKeyboardFocus" GotKeyboardFocus="MainControl_GotKeyboardFocus" PreviewMouseDown="MainControl_PreviewMouseDown">
+    
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Style.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Space" Command="local:TetrisControlCommands.Pause"/>
+    </UserControl.InputBindings>
+
+    <StackPanel Orientation="Horizontal" Name="MainPanel" HorizontalAlignment="Center" Focusable="True" Style="{StaticResource TetrisControl}">
+
+        <Border Name="PanelControls" VerticalAlignment="Top" Style="{StaticResource TetrisPanelControls}">
+            <Grid Name="GridControls">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <UniformGrid Name="GridNext" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Grid.ColumnSpan="2"/>
+
+                <Label Name="LabelLevel" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="1" Style="{StaticResource CommandsLabelStyle}">Level:</Label>
+                <Label Name="ValueLevel" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="2" Style="{StaticResource CommandsValueStyle}" Content="{Binding Path=Level, Mode=OneWay}"></Label>
+
+                <Label Name="LabelLines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" Style="{StaticResource CommandsLabelStyle}">Lines:</Label>
+                <Label Name="ValueLines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="4" Style="{StaticResource CommandsValueStyle}" Content="{Binding Path=Lines, Mode=OneWay}"></Label>
+
+                <Label Name="LabelScore" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="5" Style="{StaticResource CommandsLabelStyle}">Score:</Label>
+                <Label Name="ValueScore" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="6" Style="{StaticResource CommandsValueStyle}" Content="{Binding Path=Score, Mode=OneWay}"></Label>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.Row="7">
+                    <Button Name="ButtonStart" Command="local:TetrisControlCommands.Start" Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" HorizontalAlignment="Center" Focusable="False">
+                        <Image Source="pic/Play.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                    <Button Name="ButtonPause" Command="local:TetrisControlCommands.Pause" Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" HorizontalAlignment="Center" Focusable="False">
+                        <Image Source="pic/Pause.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                    <Button Name="ButtonStop" Command="local:TetrisControlCommands.Stop" Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" HorizontalAlignment="Center" Focusable="False">
+                        <Image Source="pic/Stop.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Name="PanelTank" VerticalAlignment="Center" Style="{StaticResource TetrisTank}" MouseDown="PanelTank_MouseDown">
+            <UniformGrid Name="GridTank"/>
+        </Border>
+
+        <Border Name="PanelSettings" VerticalAlignment="Top" Style="{StaticResource TetrisPanelSettings}">
+            <Grid Name="GridSettings">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Style="{StaticResource SettingsLabelStyle}">Width</Label>
+
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="1" Orientation="Horizontal" Style="{StaticResource SettingsValueStyle}">
+                    <Button Name="ButtonWidthMinus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonWidthMinus_Click" >
+                        <Image Source="pic/Minus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                    <TextBox Name="TextTankWidth" Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=TankWidth, Mode=TwoWay, UpdateSourceTrigger=Explicit}" 
+                        Focusable="True" LostFocus="TextTankWidth_LostFocus"/>
+                    <Button Name="ButtonWidthPlus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonWidthPlus_Click">
+                        <Image Source="pic/Plus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                </StackPanel>
+
+                <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="2" Style="{StaticResource SettingsLabelStyle}">Height</Label>
+
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" Orientation="Horizontal" Style="{StaticResource SettingsValueStyle}">
+                    <Button Name="ButtonHeightMinus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonHeightMinus_Click">
+                        <Image Source="pic/Minus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                    <TextBox Name="TextTankHeight" Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=TankHeight, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                        Focusable="True" LostFocus="TextTankHeight_LostFocus"/>
+                    <Button Name="ButtonHeightPlus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonHeightPlus_Click">
+                        <Image Source="pic/Plus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </Button>
+                </StackPanel>
+
+                <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="4" Style="{StaticResource SettingsLabelStyle}">Figures</Label>
+
+                <ComboBox Name="TextFigureSet" Grid.Row="5" Focusable="False"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    SelectedValue="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=FigureSet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    SelectionChanged="TextFigureSet_SelectionChanged"
+                    ItemsSource="{Binding}" DisplayMemberPath="Name" SelectedValuePath="Id" DropDownClosed="TextFigureSet_DropDownClosed"/>
+
+                <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="6" Style="{StaticResource SettingsLabelStyle}">Colors</Label>
+
+                <ComboBox Name="TextColorSet" Grid.Row="7" Focusable="False"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    SelectedValue="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=ColorSet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    SelectionChanged="TextColorSet_SelectionChanged" 
+                    ItemsSource="{Binding}" DisplayMemberPath="Name" SelectedValuePath="Id" DropDownClosed="TextColorSet_DropDownClosed"/>
+            </Grid>
+        </Border>
+
+    </StackPanel>
+
+</UserControl>
