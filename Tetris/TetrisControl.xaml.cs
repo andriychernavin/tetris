@@ -83,9 +83,10 @@ namespace Tetris
         {
             set { SetValue(FigureSetProperty, value); }
             get { return (TetrisFiguresEnum)GetValue(FigureSetProperty); }
-        } 
+        }
         public static readonly DependencyProperty FigureSetProperty;
-        private TetrisFiguresEnum PrevFigureSet = 0;
+        private TetrisFiguresEnum PrevFigureSet = 0; // предыдущий набор фигур
+        private bool FigureSetChanged = false; // признак изменения набора фигур во время игры
 
         public TetrisFigureColorsEnum ColorSet // набор цветов
         {
@@ -93,7 +94,7 @@ namespace Tetris
             get { return (TetrisFigureColorsEnum)GetValue(ColorSetProperty); }
         }
         public static readonly DependencyProperty ColorSetProperty;
-        private TetrisFigureColorsEnum PrevColorSet = 0;
+        private TetrisFigureColorsEnum PrevColorSet = 0; // предыдущий набор цветов
 
         private static BrushConverter BrushConverter = new BrushConverter();
 
@@ -102,6 +103,8 @@ namespace Tetris
         private bool AutoPause = false; // автоматически включена пауза при потере фокуса
 
         private Random Random = new Random((int)DateTime.Now.Ticks); // генератор случайных чисел
+
+        public EventHandler<TetrisGameOverEventArgs> GameOver; // делегат для сохранения результатов игры
 
         #endregion
 
@@ -269,6 +272,8 @@ namespace Tetris
             {
                 FiguresChanged = true;
 
+                FigureSetChanged |= FigureSet == TetrisFiguresEnum.Random || (FigureSet != PrevFigureSet && PrevFigureSet != 0);
+
                 // определяем набор фигур
 
                 TetrisFiguresEnum ChoosenFigureSet;
@@ -435,6 +440,8 @@ namespace Tetris
 
             Tetris = new TetrisBase(TankWidth, TankHeight);
 
+            Tetris.GameOver = OnGameOver;
+
             SetFiguresAndColors();
 
             Tetris.PropertyChanged += Tetris_PropertyChanged;
@@ -490,6 +497,16 @@ namespace Tetris
             PrevColorSet = 0;
 
             this.InvalidateMeasure();
+        }
+
+        private void OnGameOver(object sender, TetrisGameOverEventArgs e)
+        {
+            if (GameOver != null)
+            {
+                e.FigureSet = FigureSetChanged ? TetrisFiguresEnum.Random : FigureSet;
+
+                GameOver(this, e);
+            }
         }
 
         #endregion
@@ -939,6 +956,9 @@ namespace Tetris
 
             if (Tetris.State == TetrisState.Stopped)
             {
+                PrevFigureSet = 0;
+                FigureSetChanged = false;
+
                 SetFiguresAndColors();
             }
 

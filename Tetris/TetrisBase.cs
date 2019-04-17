@@ -104,7 +104,7 @@ namespace Tetris
         const int MinDelay = 150; // конечная длина шага
         const int DelayStep = 150; // уменьшение длины шага за уровень
         const int DropDelay = 20; // длина шага при бросании фигуры
-        const int DropLastDelay = 300; // длина последнего шага при бросании фигуры
+        const int DropLastDelay = 150; // длина последнего шага при бросании фигуры (100 - мало, 300 - много)
         const int PackDelay = 100; // пауза при исчезновении строки
 
         public int Width // ширина стакана
@@ -116,6 +116,8 @@ namespace Tetris
         {
             get { return Tank.GetLength(1); }
         }
+
+        public EventHandler<TetrisGameOverEventArgs> GameOver; // делегат для сохранения результатов игры
 
         #endregion
 
@@ -618,6 +620,7 @@ namespace Tetris
                             else
                             {
                                 Stop();
+                                OnGameOver();
                             }
                         }
 
@@ -642,6 +645,32 @@ namespace Tetris
         {
             return Tank[X, Y];
         }
+
+        private void OnGameOver()
+        {
+            if (GameOver != null)
+            {
+                TetrisGameOverEventArgs e = new TetrisGameOverEventArgs();
+
+                e.Width = Width;
+                e.Height = Height;
+                e.Level = Level;
+                e.Score = Score;
+
+                GameOver(this, e);
+            }
+
+            //GameOver?.Invoke(this, e);
+        }
+    }
+
+    public class TetrisGameOverEventArgs : EventArgs
+    {
+        public int Width;
+        public int Height;
+        public int Level;
+        public int Score;
+        public TetrisFiguresEnum FigureSet;
     }
 
     // очередь с подпиской на изменение
