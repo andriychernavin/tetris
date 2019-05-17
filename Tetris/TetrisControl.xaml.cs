@@ -261,6 +261,7 @@ namespace Tetris
                 Dispatcher.Invoke(() => InvokeSetFiguresAndColors());
             }
         }
+
         private void InvokeSetFiguresAndColors()
         {
             bool FiguresChanged = false;
@@ -304,6 +305,7 @@ namespace Tetris
                         break;
                     case (TetrisFiguresEnum.Figures2x2):
                         Figures = new TetrisFiguresRandom(2, true, 2, 4);
+                        //Figures = new TetrisFiguresRandom(4, true, 16, 16);
                         break;
                     case (TetrisFiguresEnum.Figures3x3):
                         Figures = new TetrisFiguresRandom(3, true, 2, 5);

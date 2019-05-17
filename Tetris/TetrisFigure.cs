@@ -103,12 +103,15 @@ namespace Tetris
         // массив для отображения фигуры
         public TetrisBlock[,] GetView()
         {
-            TetrisBlock[,] View = new TetrisBlock[Width, Height];
+            lock (Blocks)
+            {
+                TetrisBlock[,] View = new TetrisBlock[Width, Height];
 
-            foreach (TetrisBlock Block in Blocks)
-                View[Block.X, Block.Y] = Block;
+                foreach (TetrisBlock Block in Blocks)
+                    View[Block.X, Block.Y] = Block;
 
-            return View;
+                return View;
+            }
         }
 
         // проверка подобия фигур

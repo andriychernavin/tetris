@@ -22,9 +22,17 @@ namespace Tetris
     /// </summary>
     public partial class MainWindow : Window
     {
+        double InitialWindowWidth;
+        double InitialWindowHeight;
+        WindowState InitialWindowState;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            InitialWindowWidth = this.Width;
+            InitialWindowHeight = this.Height;
+            InitialWindowState = this.WindowState;
 
             CultureInfo.DefaultThreadCurrentCulture = Constants.Culture;
 
@@ -45,6 +53,8 @@ namespace Tetris
 
         private void ResetSettings()
         {
+            // сбрасываем настройки игры
+
             Properties.Settings.Default.Reset();
             Properties.Settings.Default.Save();
 
@@ -58,6 +68,8 @@ namespace Tetris
 
         private void SaveSettings()
         {
+            // сохраняем настройки игры
+
             bool SettingsChanged = false;
 
             if (Properties.Settings.Default.TankWidth != Tetris.TankWidth)
@@ -98,9 +110,19 @@ namespace Tetris
             MessageBox.Show(Message, "About");
         }
 
-        private void MenuItemReset_Click(object sender, RoutedEventArgs e)
+        private void MenuItemResetSettings_Click(object sender, RoutedEventArgs e)
         {
             ResetSettings();
+        }
+
+        private void MenuItemResetWindow_Click(object sender, RoutedEventArgs e)
+        {
+            // сбрасываем настройки окна
+
+            this.Width = InitialWindowWidth;
+            this.Height = InitialWindowHeight;
+
+            if (InitialWindowState != WindowState.Minimized) this.WindowState = InitialWindowState;
         }
 
         #endregion

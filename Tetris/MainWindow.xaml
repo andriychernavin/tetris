@@ -18,7 +18,8 @@
                 <ContextMenu>
                     <MenuItem Header="About" Click="MenuItemAbout_Click"/>
                     <Separator/>
-                    <MenuItem Header="Reset settings" Click="MenuItemReset_Click"/>
+                    <MenuItem Header="Reset settings" Click="MenuItemResetSettings_Click"/>
+                    <MenuItem Header="Reset window" Click="MenuItemResetWindow_Click"/>
                 </ContextMenu>
             </local:TetrisControl.ContextMenu>
         </local:TetrisControl>

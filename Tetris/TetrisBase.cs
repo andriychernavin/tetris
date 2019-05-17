@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Windows.Media;
 
-//using System.Diagnostics;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -166,17 +166,20 @@ namespace Tetris
             CurrentFigure.OffsetX = (Width - CurrentFigure.Width) / 2;
             CurrentFigure.OffsetY = 0;
 
-            // проверяем место для фигуры
+            lock (Tank)
+            {
+                // проверяем место для фигуры
 
-            if (!TryCurrentFigure(CurrentFigure)) return false;
+                if (!TryCurrentFigure(CurrentFigure)) return false;
 
-            // добавляем фигуру в стакан
+                // добавляем фигуру в стакан
 
-            ShowCurrentFigure();
+                ShowCurrentFigure();
 
-            // добавляем следующую фигуру
+                // добавляем следующую фигуру
 
-            CreateNextFigure();
+                CreateNextFigure();
+            }
 
             return true;
         }
@@ -193,84 +196,116 @@ namespace Tetris
             OnPropertyChanged("NextFigure");
         }
 
-        // проверка перемещения влево
-        private bool TryLeft()
-        {
-            TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
-
-            Figure.MoveLeft();
-
-            return TryCurrentFigure(Figure);
-        }
-
         // перемещение влево
-        private void MoveLeft()
+        private bool MoveLeft()
         {
-            HideCurrentFigure();
+            lock (Tank)
+            {
+                // проверка
 
-            CurrentFigure.MoveLeft();
+                TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
 
-            ShowCurrentFigure();
-        }
+                Figure.MoveLeft();
 
-        // проверка перемещения вправо
-        private bool TryRight()
-        {
-            TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
+                if (!TryCurrentFigure(Figure)) return false;
 
-            Figure.MoveRight();
+                // перемещение
 
-            return TryCurrentFigure(Figure);
+                HideCurrentFigure();
+
+                CurrentFigure.MoveLeft();
+
+                ShowCurrentFigure();
+
+                return true;
+            }
         }
 
         // перемещение вправо
-        private void MoveRight()
+        private bool MoveRight()
         {
-            HideCurrentFigure();
+            lock (Tank)
+            {
+                // проверка
 
-            CurrentFigure.MoveRight();
+                TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
 
-            ShowCurrentFigure();
+                Figure.MoveRight();
+
+                if (!TryCurrentFigure(Figure)) return false;
+
+                // перемещение
+
+                HideCurrentFigure();
+
+                CurrentFigure.MoveRight();
+
+                ShowCurrentFigure();
+
+                return true;
+            }
         }
 
-        // проверка перемещения вниз
         private bool TryDown()
         {
-            TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
+            lock (Tank)
+            {
+                TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
 
-            Figure.MoveDown();
+                Figure.MoveDown();
 
-            return TryCurrentFigure(Figure);
+                return TryCurrentFigure(Figure);
+            }
         }
 
         // перемещение вниз
-        private void MoveDown()
+        private bool MoveDown()
         {
-            HideCurrentFigure();
+            lock (Tank)
+            {
+                // проверка
 
-            CurrentFigure.MoveDown();
+                TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
 
-            ShowCurrentFigure();
-        }
+                Figure.MoveDown();
 
-        // проверка перемещения поворотом
-        private bool TryRotate()
-        {
-            TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
+                if (!TryCurrentFigure(Figure)) return false;
 
-            Figure.MoveRotate();
+                // перемещение
 
-            return TryCurrentFigure(Figure);
+                HideCurrentFigure();
+
+                CurrentFigure.MoveDown();
+
+                ShowCurrentFigure();
+
+                return true;
+            }
         }
 
         // перемещение поворотом
-        private void MoveRotate()
+        private bool MoveRotate()
         {
-            HideCurrentFigure();
+            lock (Tank)
+            {
+                // проверка
 
-            CurrentFigure.MoveRotate();
+                TetrisFigure Figure = (TetrisFigure)CurrentFigure.Clone();
 
-            ShowCurrentFigure();
+                Figure.MoveRotate();
+
+                if (!TryCurrentFigure(Figure)) return false;
+
+                // перемещение
+
+                HideCurrentFigure();
+
+                CurrentFigure.MoveRotate();
+
+                ShowCurrentFigure();
+
+                return true;
+            }
         }
 
         // проверка возможности перемещения фигуры на заданную позицию
@@ -326,45 +361,48 @@ namespace Tetris
         // упаковка стакана
         private void Pack()
         {
-            int TankWidth = Width;
-            int TankHeight = Height;
-
-            int InitialLevel = Level;
-
-            for (int Y = 0; Y < TankHeight; Y++)
+            lock (Tank)
             {
-                int BlockCount = 0;
+                int TankWidth = Width;
+                int TankHeight = Height;
 
-                for (int X = 0; X < TankWidth; X++)
-                    if (Tank[X, Y] != null)
-                        BlockCount++;
+                int InitialLevel = Level;
 
-                if (BlockCount == TankWidth)
+                for (int Y = 0; Y < TankHeight; Y++)
                 {
+                    int BlockCount = 0;
+
                     for (int X = 0; X < TankWidth; X++)
+                        if (Tank[X, Y] != null)
+                            BlockCount++;
+
+                    if (BlockCount == TankWidth)
                     {
-                        for (int Y1 = Y; Y1 > 0; Y1--)
-                            Tank[X, Y1] = Tank[X, Y1 - 1];
-
-                        Tank[X, 0] = null;
-                    }
-
-                    Score += TankWidth * InitialLevel;
-
-                    if (Level == InitialLevel)
-                    {
-                        Lines += 1;
-
-                        if (Lines == TankHeight)
+                        for (int X = 0; X < TankWidth; X++)
                         {
-                            Level += 1;
-                            Lines = 0;
+                            for (int Y1 = Y; Y1 > 0; Y1--)
+                                Tank[X, Y1] = Tank[X, Y1 - 1];
+
+                            Tank[X, 0] = null;
                         }
+
+                        Score += TankWidth * InitialLevel;
+
+                        if (Level == InitialLevel)
+                        {
+                            Lines += 1;
+
+                            if (Lines == TankHeight)
+                            {
+                                Level += 1;
+                                Lines = 0;
+                            }
+                        }
+
+                        Thread.Sleep(PackDelay);
+
+                        OnPropertyChanged("Tank");
                     }
-
-                    Thread.Sleep(PackDelay);
-
-                    OnPropertyChanged("Tank");
                 }
             }
         }
@@ -379,17 +417,21 @@ namespace Tetris
             {
                 case TetrisState.Paused:
 
-                    State = TetrisState.Started;
                     lock (Commands) Commands.Clear();
+
+                    State = TetrisState.Started;
                     StartTimerDown();
 
                     break;
 
                 case TetrisState.Stopped:
 
-                    Array.Clear(Tank, 0, Tank.GetLength(0) * Tank.GetLength(1));
+                    lock (Tank)
+                    {
+                        Array.Clear(Tank, 0, Tank.GetLength(0) * Tank.GetLength(1));
 
-                    OnPropertyChanged("Tank");
+                        OnPropertyChanged("Tank");
+                    }
 
                     CurrentFigure = null;
                     NextFigure = null;
@@ -403,7 +445,6 @@ namespace Tetris
                     if (CreateCurrentFigure())
                     {
                         State = TetrisState.Started;
-                        lock (Commands) Commands.Clear();
                         StartTimerDown();
                     }
                     else
@@ -422,15 +463,17 @@ namespace Tetris
                 case TetrisState.Started:
 
                     State = TetrisState.Paused;
-
                     StopTimerDown();
+
+                    lock (Commands) Commands.Clear();
 
                     break;
 
                 case TetrisState.Paused:
 
-                    State = TetrisState.Started;
                     lock (Commands) Commands.Clear();
+
+                    State = TetrisState.Started;
                     StartTimerDown();
 
                     break;
@@ -447,11 +490,10 @@ namespace Tetris
                     CurrentFigure = null;
                     NextFigure = null;
 
-                    lock (Commands) Commands.Clear();
-
+                    State = TetrisState.Stopped;
                     StopTimerDown();
 
-                    State = TetrisState.Stopped;
+                    lock (Commands) Commands.Clear();
 
                     break;
             }
@@ -490,6 +532,7 @@ namespace Tetris
             if (IsRunning())
             {
                 lock (Commands) Commands.Clear();
+
                 Commands.Enqueue(TetrisCommand.Down);
             }
         }
@@ -505,22 +548,29 @@ namespace Tetris
 
         public void Left()
         {
-            if (IsRunning()) Commands.Enqueue(TetrisCommand.Left);
+            if (IsRunning()) EnqueueCommand(TetrisCommand.Left);
         }
 
         public void Right()
         {
-            if (IsRunning()) Commands.Enqueue(TetrisCommand.Right);
+            if (IsRunning()) EnqueueCommand(TetrisCommand.Right);
         }
 
         public void Rotate()
         {
-            if (IsRunning()) Commands.Enqueue(TetrisCommand.Rotate);
+            if (IsRunning()) EnqueueCommand(TetrisCommand.Rotate);
         }
 
         public void Drop()
         {
-            if (IsRunning()) Commands.Enqueue(TetrisCommand.Drop);
+            if (IsRunning()) EnqueueCommand(TetrisCommand.Drop);
+        }
+
+        private void EnqueueCommand(TetrisCommand command)
+        {
+            // добавляем в другом потоке, т.к. при добавлении в основном потоке потом в процессе обработки можем вернуться к нему обратно и зависнуть в ожидании // см. Pack()
+
+            Task.Run(() => Commands.Enqueue(command));
         }
 
         #endregion
@@ -533,65 +583,56 @@ namespace Tetris
             {
                 if (Commands.Count() == 0) return;
 
-                //Debug.WriteLine("Thread: " + Thread.CurrentThread.ManagedThreadId);
-
                 switch (Commands.Dequeue())
                 {
                     case TetrisCommand.Left:
 
-                        if (TryLeft())
-                            MoveLeft();
-                        else if (DropFlag)
-                            DelayedCommand = TetrisCommand.Left;
+                        if (!MoveLeft() && DropFlag) DelayedCommand = TetrisCommand.Left;
 
                         break;
 
                     case TetrisCommand.Right:
 
-                        if (TryRight())
-                            MoveRight();
-                        else if (DropFlag)
-                            DelayedCommand = TetrisCommand.Right;
+                        if (!MoveRight() && DropFlag) DelayedCommand = TetrisCommand.Right;
 
                         break;
 
                     case TetrisCommand.Rotate:
 
-                        if (TryRotate()) MoveRotate();
+                        MoveRotate();
 
                         break;
 
                     case TetrisCommand.Drop:
 
-                        DropFlag = !DropFlag;
-                        DelayedCommand = null;
-                        ChangeTimerDown(0, DropFlag ? DropDelay : TimerDownPeriod());
+                        if (!DropFlag)
+                        {
+                            DropFlag = true;
+                            DelayedCommand = null;
+                            ChangeTimerDown(0, DropDelay);
+                        }
 
                         break;
 
                     case TetrisCommand.Down:
 
-                        if (TryDown())
+                        if (MoveDown())
                         {
-                            MoveDown();
-
                             if (DropFlag && DelayedCommand != null)
                             {
                                 switch (DelayedCommand)
                                 {
                                     case TetrisCommand.Left:
-                                        if (TryLeft())
+                                        if (MoveLeft())
                                         {
-                                            MoveLeft();
                                             DropFlag = false;
                                             DelayedCommand = null;
                                             ChangeTimerDown(DropDelay, TimerDownPeriod());
                                         }
                                         break;
                                     case TetrisCommand.Right:
-                                        if (TryRight())
+                                        if (MoveRight())
                                         {
-                                            MoveRight();
                                             DropFlag = false;
                                             DelayedCommand = null;
                                             ChangeTimerDown(DropDelay, TimerDownPeriod());
@@ -638,7 +679,7 @@ namespace Tetris
 
         public TetrisBlock[,] GetView() // массив для отображения стакана
         {
-            return Tank;
+            return (TetrisBlock[,])Tank.Clone();
         }
 
         public TetrisBlock GetView(int X, int Y) // точка из стакана
