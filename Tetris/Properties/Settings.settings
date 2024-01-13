@@ -9,10 +9,25 @@
       <Value Profile="(Default)">20</Value>
     </Setting>
     <Setting Name="FigureSet" Type="Tetris.TetrisFiguresEnum" Scope="User">
-      <Value Profile="(Default)">Standard</Value>
+      <Value Profile="(Default)">Classic</Value>
     </Setting>
     <Setting Name="ColorSet" Type="Tetris.TetrisFigureColorsEnum" Scope="User">
       <Value Profile="(Default)">Random</Value>
+    </Setting>
+    <Setting Name="WindowLeft" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="WindowTop" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="WindowWidth" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="WindowHeight" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="WindowMaximized" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

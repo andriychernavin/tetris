@@ -12,6 +12,9 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Documents;
+using System.Windows.Markup;
+using System.Windows.Annotations;
 
 namespace Tetris
 {
@@ -52,8 +55,14 @@ namespace Tetris
             set { FigureColorsValue = value; } // обновить цвет тек и след фигуры
             get { return FigureColorsValue; }
         }
-
         private TetrisFigureColors FigureColorsValue;
+
+        public bool FigureShadow // показывать тень от текущей фигуры
+        {
+            set { FigureShadowValue = value; }
+            get { return FigureShadowValue; }
+        }
+        private bool FigureShadowValue;
 
         private TetrisFigure CurrentFigure; // текущая фигура
 
@@ -125,9 +134,9 @@ namespace Tetris
 
         public TetrisBase(int desiredWidth, int desiredHeight, TetrisFigures figures = null, TetrisFigureColors colors = null)
         {
-            Figures = figures ?? new TetrisFiguresStandard();
+            Figures = figures ?? new TetrisFiguresClassic();
 
-            FigureColors = colors ?? new TetrisColorsStandard();
+            FigureColors = colors ?? new TetrisColorsLight();
 
             State = TetrisState.Stopped;
 
@@ -294,13 +303,18 @@ namespace Tetris
 
                 Figure.MoveRotate();
 
-                if (!TryCurrentFigure(Figure)) return false;
+                while (true)
+                {
+                    if (TryCurrentFigure(Figure)) break;
+
+                    if (!Figure.NextOffset()) return false;
+                }
 
                 // перемещение
 
                 HideCurrentFigure();
 
-                CurrentFigure.MoveRotate();
+                CurrentFigure = Figure;
 
                 ShowCurrentFigure();
 
@@ -320,7 +334,7 @@ namespace Tetris
                 if (X < 0 || X > Width - 1 || Y < 0 || Y > Height - 1) return false;
 
                 // проверяем наложение на другие элементы (кроме текущей фигуры)
-                if (Tank[X, Y] != null && CurrentFigure.Blocks.SingleOrDefault(p => p == Tank[X, Y]) == null) return false;
+                if (Tank[X, Y] != null && !Tank[X, Y].Shadow && CurrentFigure.Blocks.SingleOrDefault(p => p == Tank[X, Y]) == null) return false;
             }
 
             return true;
@@ -337,12 +351,47 @@ namespace Tetris
                 Tank[X, Y] = null;
 
                 OnPropertyChanged("TankX" + X.ToString() + "Y" + Y.ToString());
+
+                if (FigureShadow && CurrentFigure.ShadowOffsetY != CurrentFigure.OffsetY)
+                {
+                    Y = Block.Y + CurrentFigure.ShadowOffsetY;
+
+                    Tank[X, Y] = null;
+
+                    OnPropertyChanged("TankX" + X.ToString() + "Y" + Y.ToString());
+                }
+
             }
         }
 
         // добавляем текущую фигуру на картинку
         private void ShowCurrentFigure()
         {
+            // определяем положение тени
+
+            if (FigureShadow)
+            {
+                CurrentFigure.ShadowOffsetY = CurrentFigure.OffsetY;
+
+                TetrisFigure ShadowFigure = (TetrisFigure)CurrentFigure.Clone();
+
+                while (true)
+                {
+                    ShadowFigure.OffsetY++;
+
+                    if (TryCurrentFigure(ShadowFigure))
+                    {
+                        CurrentFigure.ShadowOffsetY = ShadowFigure.OffsetY;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // выводим фигуру
+
             foreach (TetrisBlock Block in CurrentFigure.Blocks)
             {
                 int X = Block.X + CurrentFigure.OffsetX;
@@ -351,6 +400,28 @@ namespace Tetris
                 Tank[X, Y] = Block;
 
                 OnPropertyChanged("TankX" + X.ToString() + "Y" + Y.ToString());
+            }
+
+            // выводим тень
+
+            if (FigureShadow)
+            {
+                if (CurrentFigure.ShadowOffsetY != CurrentFigure.OffsetY)
+                {
+                    foreach (TetrisBlock Block in CurrentFigure.Blocks)
+                    {
+                        int X = Block.X + CurrentFigure.OffsetX;
+                        int Y = Block.Y + CurrentFigure.ShadowOffsetY;
+
+                        if (Tank[X, Y] == null)
+                        {
+                            Tank[X, Y] = (TetrisBlock)Block.Clone();
+                            Tank[X, Y].Shadow = true;
+
+                            OnPropertyChanged("TankX" + X.ToString() + "Y" + Y.ToString());
+                        }
+                    }
+                }
             }
         }
 
@@ -367,6 +438,8 @@ namespace Tetris
                 int TankHeight = Height;
 
                 int InitialLevel = Level;
+
+                int LineNumber = 0;
 
                 for (int Y = 0; Y < TankHeight; Y++)
                 {
@@ -386,7 +459,9 @@ namespace Tetris
                             Tank[X, 0] = null;
                         }
 
-                        Score += TankWidth * InitialLevel;
+                        LineNumber++;
+
+                        Score += TankWidth * InitialLevel * LineNumber;
 
                         if (Level == InitialLevel)
                         {
@@ -426,12 +501,7 @@ namespace Tetris
 
                 case TetrisState.Stopped:
 
-                    lock (Tank)
-                    {
-                        Array.Clear(Tank, 0, Tank.GetLength(0) * Tank.GetLength(1));
-
-                        OnPropertyChanged("Tank");
-                    }
+                    ResetTank();
 
                     CurrentFigure = null;
                     NextFigure = null;
@@ -599,7 +669,7 @@ namespace Tetris
 
                     case TetrisCommand.Rotate:
 
-                        MoveRotate();
+                        if (!MoveRotate() && DropFlag) DelayedCommand = TetrisCommand.Rotate;
 
                         break;
 
@@ -627,7 +697,8 @@ namespace Tetris
                                         {
                                             DropFlag = false;
                                             DelayedCommand = null;
-                                            ChangeTimerDown(DropDelay, TimerDownPeriod());
+                                            //ChangeTimerDown(DropDelay, TimerDownPeriod());
+                                            ChangeTimerDown(TryDown() ? TimerDownPeriod() : DropLastDelay, TimerDownPeriod());
                                         }
                                         break;
                                     case TetrisCommand.Right:
@@ -635,7 +706,17 @@ namespace Tetris
                                         {
                                             DropFlag = false;
                                             DelayedCommand = null;
-                                            ChangeTimerDown(DropDelay, TimerDownPeriod());
+                                            //ChangeTimerDown(DropDelay, TimerDownPeriod());
+                                            ChangeTimerDown(TryDown() ? TimerDownPeriod() : DropLastDelay, TimerDownPeriod());
+                                        }
+                                        break;
+                                    case TetrisCommand.Rotate:
+                                        if (MoveRotate())
+                                        {
+                                            DropFlag = false;
+                                            DelayedCommand = null;
+                                            //ChangeTimerDown(DropDelay, TimerDownPeriod());
+                                            ChangeTimerDown(TryDown() ? TimerDownPeriod() : DropLastDelay, TimerDownPeriod());
                                         }
                                         break;
                                 }
@@ -702,6 +783,23 @@ namespace Tetris
             }
 
             //GameOver?.Invoke(this, e);
+        }
+
+        public void ResetTank()
+        {
+            if (State != TetrisState.Stopped) throw new Exception("Incorrect state to clear");
+
+            lock (Tank)
+            {
+                Array.Clear(Tank, 0, Tank.GetLength(0) * Tank.GetLength(1));
+
+                OnPropertyChanged("Tank");
+            }
+        }
+
+        public void ResetScore()
+        {
+            Score = 0;
         }
     }
 

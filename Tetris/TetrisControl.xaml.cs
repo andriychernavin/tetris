@@ -31,6 +31,7 @@ namespace Tetris
     {
         public static RoutedUICommand Start { private set; get; }
         public static RoutedUICommand Pause { private set; get; }
+        public static RoutedUICommand StartOrPause { private set; get; }
         public static RoutedUICommand Stop { private set; get; }
 
         public static RoutedUICommand Left { private set; get; }
@@ -44,29 +45,39 @@ namespace Tetris
 
             Pause = new RoutedUICommand("Pause", "Pause", typeof(TetrisControl));
 
+            {
+                InputGestureCollection input = new InputGestureCollection();
+                input.Add(new KeyGesture(Key.Space));
+                StartOrPause = new RoutedUICommand("StartOrPause", "StartOrPause", typeof(TetrisControl), input);
+            }
+
             Stop = new RoutedUICommand("Stop", "Stop", typeof(TetrisControl));
 
             {
                 InputGestureCollection input = new InputGestureCollection();
                 input.Add(new KeyGesture(Key.Left));
+                //input.Add(new KeyGesture(Key.A));
                 Left = new RoutedUICommand("Left", "Left", typeof(TetrisControl), input);
             }
 
             {
                 InputGestureCollection input = new InputGestureCollection();
                 input.Add(new KeyGesture(Key.Right));
+                //input.Add(new KeyGesture(Key.D));
                 Right = new RoutedUICommand("Right", "Right", typeof(TetrisControl), input);
             }
 
             {
                 InputGestureCollection input = new InputGestureCollection();
                 input.Add(new KeyGesture(Key.Up));
+                //input.Add(new KeyGesture(Key.W));
                 Rotate = new RoutedUICommand("Rotate", "Rotate", typeof(TetrisControl), input);
             }
 
             {
                 InputGestureCollection input = new InputGestureCollection();
                 input.Add(new KeyGesture(Key.Down));
+                //input.Add(new KeyGesture(Key.S));
                 //input.Add(new KeyGesture(Key.Space));
                 Drop = new RoutedUICommand("Drop", "Drop", typeof(TetrisControl), input);
             }
@@ -95,6 +106,13 @@ namespace Tetris
         }
         public static readonly DependencyProperty ColorSetProperty;
         private TetrisFigureColorsEnum PrevColorSet = 0; // предыдущий набор цветов
+
+        public bool FigureShadow // показывать тень от текущей фигуры
+        {
+            set { SetValue(FigureShadowProperty, value); }
+            get { return (bool)GetValue(FigureShadowProperty); }
+        }
+        public static readonly DependencyProperty FigureShadowProperty;
 
         private static BrushConverter BrushConverter = new BrushConverter();
 
@@ -193,6 +211,7 @@ namespace Tetris
             TankHeightProperty = DependencyProperty.Register("TankHeight", typeof(int), typeof(TetrisControl), new PropertyMetadata(MinTankHeight, null, CorrectTankHeight), new ValidateValueCallback(ValidateTankHeight));
             FigureSetProperty = DependencyProperty.Register("FigureSet", typeof(TetrisFiguresEnum), typeof(TetrisControl));
             ColorSetProperty = DependencyProperty.Register("ColorSet", typeof(TetrisFigureColorsEnum), typeof(TetrisControl));
+            FigureShadowProperty = DependencyProperty.Register("FigureShadow", typeof(bool), typeof(TetrisControl));
         }
 
         public TetrisControl()
@@ -244,7 +263,31 @@ namespace Tetris
 
             // инициализация
 
-            InitializeControls();
+            if (Tetris == null) InitializeControls();
+
+            var window = Window.GetWindow(this);
+            window.KeyDown += HandleKeyPress;
+        }
+
+        private void HandleKeyPress(object sender, KeyEventArgs e)
+        {
+            // не удалось вызвать команды юзерконтрола, потому вызываем команды напрямую
+
+            switch (e.Key)
+            {
+                case Key.W:
+                    Tetris.Rotate();
+                    break;
+                case Key.A:
+                    Tetris.Left();
+                    break;
+                case Key.S:
+                    Tetris.Drop();
+                    break;
+                case Key.D:
+                    Tetris.Right();
+                    break;
+            }
         }
 
         // устанавливаем набор фигур
@@ -281,6 +324,8 @@ namespace Tetris
 
                 TetrisFigures Figures;
 
+                TetrisFiguresGenerator Generator;
+
                 if (FigureSet == TetrisFiguresEnum.Random)
                 {
                     var List = Enum.GetValues(typeof(TetrisFiguresEnum)).Cast<TetrisFiguresEnum>().Where(e => e != PrevFigureSet && e != TetrisFiguresEnum.Random);
@@ -292,6 +337,8 @@ namespace Tetris
                 else
                 {
                     ChoosenFigureSet = FigureSet;
+
+                    Tetris.ResetScore();
                 }
 
                 PrevFigureSet = ChoosenFigureSet;
@@ -300,18 +347,32 @@ namespace Tetris
 
                 switch (ChoosenFigureSet)
                 {
-                    case (TetrisFiguresEnum.Standard):
-                        Figures = new TetrisFiguresStandard();
+                    case (TetrisFiguresEnum.Classic):
+                        Figures = new TetrisFiguresClassic();
                         break;
                     case (TetrisFiguresEnum.Figures2x2):
-                        Figures = new TetrisFiguresRandom(2, true, 2, 4);
-                        //Figures = new TetrisFiguresRandom(4, true, 16, 16);
+                        Generator = new TetrisFiguresGenerator();
+                        Generator.AddFigures(2, 2, 2, 4);
+
+                        Figures = Generator;
                         break;
                     case (TetrisFiguresEnum.Figures3x3):
-                        Figures = new TetrisFiguresRandom(3, true, 2, 5);
+                        Generator = new TetrisFiguresGenerator();
+                        Generator.AddFigures(3, 3, 2, 4, TetrisFigureBindingTypeEnum.Sides);
+                        Generator.AddFigures(3, 3, 5, 5, TetrisFigureBindingTypeEnum.Sides, 33);
+                        Generator.AddFigures(3, 3, 2, 4, TetrisFigureBindingTypeEnum.Corners, 3); // изменено 1% на 3%
+                        Generator.AddFigures(3, 3, 5, 5, TetrisFigureBindingTypeEnum.Corners, 1);
+
+                        Figures = Generator;
                         break;
                     case (TetrisFiguresEnum.Figures4x4):
-                        Figures = new TetrisFiguresRandom(4, true, 2, 5);
+                        Generator = new TetrisFiguresGenerator();
+                        Generator.AddFigures(4, 4, 2, 4, TetrisFigureBindingTypeEnum.Sides);
+                        Generator.AddFigures(4, 4, 5, 5, TetrisFigureBindingTypeEnum.Sides, 33);
+                        Generator.AddFigures(4, 4, 2, 4, TetrisFigureBindingTypeEnum.Corners, 3); // изменено 1% на 3%
+                        Generator.AddFigures(4, 4, 5, 5, TetrisFigureBindingTypeEnum.Corners, 1);
+
+                        Figures = Generator;
                         break;
                     default:
                         throw new Exception("Unknown figure set");
@@ -364,8 +425,8 @@ namespace Tetris
 
                 switch (ChoosenColorSet)
                 {
-                    case (TetrisFigureColorsEnum.Standard):
-                        FigureColors = new TetrisColorsStandard();
+                    case (TetrisFigureColorsEnum.Light):
+                        FigureColors = new TetrisColorsLight();
                         break;
                     case (TetrisFigureColorsEnum.Dark):
                         FigureColors = new TetrisColorsDark();
@@ -388,10 +449,20 @@ namespace Tetris
                 Tetris.FigureColors = FigureColors;
             }
 
-            // следующая фигура
+            // тень
 
-            if (Tetris.NextFigure != null)
+            Tetris.FigureShadow = FigureShadow;
+
+            if (Tetris.State == TetrisState.Stopped)
             {
+                // при остановленной игре очищаем стакан
+
+                Tetris.ResetTank();
+            }
+            else if (Tetris.NextFigure != null)
+            {
+                // при активной игре показываем следующую фигуру
+
                 if (FiguresChanged)
                 {
                     Tetris.CreateNextFigure();
@@ -843,12 +914,16 @@ namespace Tetris
                     {
                         TetrisBlock TetrisView = Tetris.GetView(BlockX, BlockY);
 
-                        UIElement Block = GridTank.Children[BlockX + BlockY * Tetris.Width];
+                        //UIElement Block = GridTank.Children[BlockX + BlockY * Tetris.Width];
+                        //(Block as Rectangle).Fill = GetBrush(TetrisView.Color);
+
+                        Rectangle Block = (Rectangle)GridTank.Children[BlockX + BlockY * Tetris.Width];
 
                         if (TetrisView != null)
                         {
                             Block.Visibility = Visibility.Visible;
-                            (Block as Rectangle).Fill = GetBrush(TetrisView.Color);
+                            Block.Opacity = TetrisView.Shadow ? (double)this.Resources["FigureShadowOpacity"] : 1;
+                            Block.Fill = GetBrush(TetrisView.Color);
                         }
                         else
                         {
@@ -869,12 +944,16 @@ namespace Tetris
                             int X = i % GridTank.Columns;
                             int Y = i / GridTank.Columns;
 
-                            UIElement Block = GridTank.Children[i];
+                            //UIElement Block = GridTank.Children[i];
+                            //(Block as Rectangle).Fill = GetBrush(TetrisView[X, Y].Color);
+
+                            Rectangle Block = (Rectangle)GridTank.Children[i];
 
                             if (TetrisView[X, Y] != null)
                             {
                                 Block.Visibility = Visibility.Visible;
-                                (Block as Rectangle).Fill = GetBrush(TetrisView[X, Y].Color);
+                                Block.Opacity = TetrisView[X, Y].Shadow ? (double)this.Resources["FigureShadowOpacity"] : 1;
+                                Block.Fill = GetBrush(TetrisView[X, Y].Color);
                             }
                             else
                             {
@@ -930,6 +1009,24 @@ namespace Tetris
                 case "State":
                     // статус
 
+                    switch (Tetris.State)
+                    {
+                        case TetrisState.Started:
+                            GridTank.Background = (SolidColorBrush)this.Resources["TetrisTankBackgroundStarted"];
+                            GridTank.Opacity = 1;
+                            break;
+                        case TetrisState.Paused:
+                            GridTank.Background = (SolidColorBrush)this.Resources["TetrisTankBackgroundPaused"];
+                            GridTank.Opacity = (double)this.Resources["GameInactiveOpacity"];
+                            break;
+                        case TetrisState.Stopped:
+                            GridTank.Background = (SolidColorBrush)this.Resources["TetrisTankBackgroundStopped"];
+                            GridTank.Opacity = 1;
+                            break;
+                        default:
+                            throw new Exception("Unknown game state");
+                    }
+
                     CommandManager.InvalidateRequerySuggested();
 
                     break;
@@ -944,6 +1041,7 @@ namespace Tetris
         {
             this.CommandBindings.Add(new CommandBinding(TetrisControlCommands.Start, Start_Executed, Start_CanExecute));
             this.CommandBindings.Add(new CommandBinding(TetrisControlCommands.Pause, Pause_Executed, Pause_CanExecute));
+            this.CommandBindings.Add(new CommandBinding(TetrisControlCommands.StartOrPause, StartOrPause_Executed));
             this.CommandBindings.Add(new CommandBinding(TetrisControlCommands.Stop, Stop_Executed, Stop_CanExecute));
 
             this.CommandBindings.Add(new CommandBinding(TetrisControlCommands.Left, Left_Executed));
@@ -978,6 +1076,18 @@ namespace Tetris
         private void Pause_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = Tetris != null && (Tetris.State == TetrisState.Started || Tetris.State == TetrisState.Paused);
+        }
+
+        private void StartOrPause_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            if (Tetris != null && (Tetris.State == TetrisState.Stopped || Tetris.State == TetrisState.Paused))
+            {
+                Start_Executed(sender, e);
+            }
+            else if (Tetris != null && (Tetris.State == TetrisState.Started || Tetris.State == TetrisState.Paused))
+            {
+                Pause_Executed(sender, e);
+            }
         }
 
         private void Stop_Executed(object sender, ExecutedRoutedEventArgs e)

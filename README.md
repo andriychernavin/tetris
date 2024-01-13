@@ -1,7 +1,7 @@
-# Tetris 2019
+# Tetris
 
 wpf usercontrol tetris
 
-https://www.facebook.com/andriy.chernavin
+https://facebook.com/andriy.chernavin
 
-https://www.linkedin.com/in/andriychernavin
+https://linkedin.com/in/andriychernavin

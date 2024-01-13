@@ -11,7 +11,7 @@ namespace Tetris
     // список доступных наборов цветов
     public enum TetrisFigureColorsEnum
     {
-        Standard = 1,
+        Light = 1,
         Dark,
         Gray,
         White,
@@ -79,9 +79,9 @@ namespace Tetris
     }
 
     // набор светлых цветов
-    public class TetrisColorsStandard : TetrisFigureColors
+    public class TetrisColorsLight : TetrisFigureColors
     {
-        public TetrisColorsStandard()
+        public TetrisColorsLight()
         {
             AddColor(Colors.Red);
             AddColor(Colors.Green);

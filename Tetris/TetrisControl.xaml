@@ -18,9 +18,9 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <UserControl.InputBindings>
+    <!--<UserControl.InputBindings>
         <KeyBinding Key="Space" Command="local:TetrisControlCommands.Pause"/>
-    </UserControl.InputBindings>
+    </UserControl.InputBindings>-->
 
     <StackPanel Orientation="Horizontal" Name="MainPanel" HorizontalAlignment="Center" Focusable="True" Style="{StaticResource TetrisControl}">
 
@@ -82,7 +82,7 @@
                 <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Style="{StaticResource SettingsLabelStyle}">Width</Label>
 
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="1" Orientation="Horizontal" Style="{StaticResource SettingsValueStyle}">
-                    <Button Name="ButtonWidthMinus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonWidthMinus_Click" >
+                    <Button Name="ButtonWidthMinus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonWidthMinus_Click">
                         <Image Source="pic/Minus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </Button>
                     <TextBox Name="TextTankWidth" Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=TankWidth, Mode=TwoWay, UpdateSourceTrigger=Explicit}" 

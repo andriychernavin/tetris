@@ -14,6 +14,10 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using System.Globalization;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace Tetris
 {
@@ -30,23 +34,61 @@ namespace Tetris
         {
             InitializeComponent();
 
-            InitialWindowWidth = this.Width;
-            InitialWindowHeight = this.Height;
-            InitialWindowState = this.WindowState;
+            LoadSettings();
 
             CultureInfo.DefaultThreadCurrentCulture = Constants.Culture;
 
             //Loaded += (sender, e) => MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-          }
+
+            TopElement.MouseLeftButtonDown += new MouseButtonEventHandler(MoveWindow);
+        }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            this.Title = ((AssemblyTitleAttribute)assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0]).Title;
+
+            Tetris.Initialize();
+
+            this.UpdateLayout();
+
+            CompactWindow();
+
+            InitialWindowWidth = this.Width;
+            InitialWindowHeight = this.Height;
+            InitialWindowState = this.WindowState;
+
             //Keyboard.Focus(Tetris);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveSettings();
+        }
+
+        private void Window_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (this.WindowState == WindowState.Normal && e.ChangedButton == System.Windows.Input.MouseButton.Middle && e.ButtonState == MouseButtonState.Released)
+            {
+                CompactWindow();
+            }
+        }
+
+        private void CompactWindow()
+        {
+            double Width = this.ActualWidth;
+            double Height = this.ActualHeight;
+
+            this.Width = this.ActualWidth - ((System.Windows.FrameworkElement)this.Content).ActualWidth + Tetris.ActualWidth;
+            this.Height = this.ActualHeight - ((System.Windows.FrameworkElement)this.Content).ActualHeight + Tetris.ActualHeight;
+
+            this.Left = this.Left + (Width - this.Width) / 2;
+            this.Top = this.Top + (Height - this.Height) / 2;
+        }
+
+        void MoveWindow(object sender, MouseButtonEventArgs e)
+        {
+            this.DragMove();
         }
 
         #region settings
@@ -66,11 +108,22 @@ namespace Tetris
             Tetris.Initialize();
         }
 
+        private void LoadSettings()
+        {
+            if (Properties.Settings.Default.WindowLeft != 0) this.Left = Properties.Settings.Default.WindowLeft;
+            if (Properties.Settings.Default.WindowTop != 0) this.Top = Properties.Settings.Default.WindowTop;
+            if (Properties.Settings.Default.WindowWidth != 0) this.Width = Properties.Settings.Default.WindowWidth;
+            if (Properties.Settings.Default.WindowHeight != 0) this.Height = Properties.Settings.Default.WindowHeight;
+            if (Properties.Settings.Default.WindowMaximized) this.WindowState = WindowState.Maximized;
+        }
+
         private void SaveSettings()
         {
             // сохраняем настройки игры
 
             bool SettingsChanged = false;
+
+            // game settings
 
             if (Properties.Settings.Default.TankWidth != Tetris.TankWidth)
             {
@@ -96,6 +149,38 @@ namespace Tetris
                 SettingsChanged = true;
             }
 
+            // window position
+
+            if (Properties.Settings.Default.WindowLeft != this.Left)
+            {
+                Properties.Settings.Default.WindowLeft = this.Left;
+                SettingsChanged = true;
+            }
+
+            if (Properties.Settings.Default.WindowTop != this.Top)
+            {
+                Properties.Settings.Default.WindowTop = this.Top;
+                SettingsChanged = true;
+            }
+
+            if (Properties.Settings.Default.WindowWidth != this.Width)
+            {
+                Properties.Settings.Default.WindowWidth = this.Width;
+                SettingsChanged = true;
+            }
+
+            if (Properties.Settings.Default.WindowHeight != this.Height)
+            {
+                Properties.Settings.Default.WindowHeight = this.Height;
+                SettingsChanged = true;
+            }
+
+            if (Properties.Settings.Default.WindowMaximized != (this.WindowState == WindowState.Maximized))
+            {
+                Properties.Settings.Default.WindowMaximized = true;
+                SettingsChanged = true;
+            }
+
             if (SettingsChanged) Properties.Settings.Default.Save();
         }
 
@@ -105,7 +190,19 @@ namespace Tetris
 
         private void MenuItemAbout_Click(object sender, RoutedEventArgs e)
         {
-            string Message = "Tetris 2019\n\n" + "https://www.facebook.com/andriy.chernavin\n\n" + "https://www.linkedin.com/in/andriychernavin";
+            Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            string title = ((AssemblyTitleAttribute)assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0]).Title;
+            string version = assembly.GetName().Version.ToString();
+
+            string Message = title + " " + version + "\n\n"
+                + "https://facebook.com/andriy.chernavin\n"
+                + "https://linkedin.com/in/andriychernavin\n\n"
+                + "keyboard controls:\n\n"
+                + "left arrow / A - move left\n"
+                + "right arrow / D - move right\n"
+                + "up arrow / W - rotate\n"
+                + "down arrow / S - drop\n"
+                + "space - start or pause\n";
 
             MessageBox.Show(Message, "About");
         }

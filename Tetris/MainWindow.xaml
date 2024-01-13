@@ -6,13 +6,15 @@
         xmlns:local="clr-namespace:Tetris"
         xmlns:properties="clr-namespace:Tetris.Properties"
         mc:Ignorable="d"
-        Title="Tetris 2019" Height="450" Width="800" Loaded="Window_Loaded" Closing="Window_Closing">
-    <Grid>
+        Loaded="Window_Loaded" Closing="Window_Closing" MouseUp="Window_MouseUp">
+
+    <Grid x:Name="TopElement" Background="Black">
         <local:TetrisControl x:Name="Tetris" 
             TankWidth="{Binding Source={x:Static properties:Settings.Default}, Path=TankWidth}" 
             TankHeight="{Binding Source={x:Static properties:Settings.Default}, Path=TankHeight}" 
             FigureSet="{Binding Source={x:Static properties:Settings.Default}, Path=FigureSet}" 
             ColorSet="{Binding Source={x:Static properties:Settings.Default}, Path=ColorSet}" 
+            FigureShadow="True"
             HorizontalAlignment="Center" VerticalAlignment="Center">
             <local:TetrisControl.ContextMenu>
                 <ContextMenu>

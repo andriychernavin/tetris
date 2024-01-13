@@ -11,10 +11,11 @@ using System.ComponentModel;
 namespace Tetris
 {
     // список доступных наборов фигур
+
     public enum TetrisFiguresEnum
     {
         [Description("Classic")]
-        Standard = 1,
+        Classic = 1,
 
         [Description("2 x 2")]
         Figures2x2,
@@ -35,6 +36,13 @@ namespace Tetris
 
         private Random Random = new Random((int)DateTime.Now.Ticks); // генератор случайных чисел
 
+        private bool RandomRotate; // признак случайного вращения новой фигуры
+
+        public TetrisFigures(bool RandomRotate = true)
+        {
+            this.RandomRotate = RandomRotate;
+        }
+
         // добавить фигуру в набор
         public void AddFigure(TetrisFigure Figure)
         {
@@ -44,11 +52,17 @@ namespace Tetris
         // получить случайную фигуру из набора
         public TetrisFigure GetFigure()
         {
-            if (Figures.Count() == 0) throw new Exception("The set contains no figures");
+            if (Figures.Count() == 0) throw new Exception("Set contains no figures");
 
-            TetrisFigure Figure = (TetrisFigure)Figures[Random.Next(Figures.Count())].Clone();
+            int TotalChance = 0;
 
-            return Figure;
+            Figures.ForEach(f => TotalChance += f.Chance);
+
+            int RandomChance = Random.Next(TotalChance) + 1;
+
+            TotalChance = 0;
+
+            return Figures.First(f => (TotalChance += f.Chance) >= RandomChance).Clone() as TetrisFigure;
         }
 
         // получить случайную фигуру заданного цвета из набора
@@ -64,20 +78,44 @@ namespace Tetris
         // максимальная ширина фигуры в наборе
         public int MaxWidth
         {
-            get { return Figures.Max(x => x.Width); }
+            get
+            {
+                if (RandomRotate)
+                    return Math.Max(Figures.Max(x => x.Width), Figures.Max(x => x.Height));
+                else
+                    return Figures.Max(x => x.Width);
+            }
         }
 
         // максимальная высота фигуры в наборе
         public int MaxHeight
         {
-            get { return Figures.Max(x => x.Height); }
+            get
+            {
+                if (RandomRotate)
+                    return Math.Max(Figures.Max(x => x.Width), Figures.Max(x => x.Height));
+                else
+                    return Figures.Max(x => x.Height);
+            }
+        }
+
+        // устанавливает вероятность выбора для каждой фигуры
+        public void SetChance(int Chance, int MinBlocks = 0, int MaxBlocks = 0, TetrisFigureBindingTypeEnum? BindingType = null)
+        {
+            if (Chance < 1 || Chance > 100) throw new Exception("Wrong figure chance");
+
+            foreach (TetrisFigure Figure in Figures)
+            {
+                if ((MinBlocks == 0 || MinBlocks <= Figure.Blocks.Length) && (MaxBlocks == 0 || MaxBlocks >= Figure.Blocks.Length) && (!BindingType.HasValue || BindingType.Value.HasFlag(Figure.BindingType)))
+                    Figure.Chance = Chance;
+            }
         }
     }
 
     // набор стандартных фигур
-    public class TetrisFiguresStandard : TetrisFigures
+    public class TetrisFiguresClassic : TetrisFigures
     {
-        public TetrisFiguresStandard()
+        public TetrisFiguresClassic() : base()
         {
             AddFigure(new TetrisFigure(new int[,] { { 0, 0 }, { 1, 0 }, { 2, 0 }, { 3, 0 } })); // палка
             AddFigure(new TetrisFigure(new int[,] { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } })); // квадрат
@@ -89,16 +127,18 @@ namespace Tetris
         }
     }
 
-    // набор случайных фигур
-    public class TetrisFiguresRandom : TetrisFigures
+    // генератор набора фигур
+    public class TetrisFiguresGenerator : TetrisFigures
     {
-        public TetrisFiguresRandom(int Size, bool CheckConnected = true, int MinBlocks = 0, int MaxBlocks = 0)
+        public TetrisFiguresGenerator(bool RandomRotate = true) : base(RandomRotate) { }
+
+        public void AddFigures(int SizeX, int SizeY, int MinBlocks = 0, int MaxBlocks = 0, TetrisFigureBindingTypeEnum BindingType = TetrisFigureBindingTypeEnum.Sides, int Chance = 100)
         {
-            int Variants = (int)Math.Pow(2, Size * Size); // количество вариантов для анализа
+            int Variants = (int)Math.Pow(2, SizeX * SizeY); // количество вариантов для анализа
 
             for (int Variant = 1; Variant < Variants; Variant++)
             {
-                bool[] Bits = Convert.ToString(Variant, 2).PadLeft(Size * Size, '0').Select(c => c == '1').ToArray();
+                bool[] Bits = Convert.ToString(Variant, 2).PadLeft(SizeX * SizeY, '0').Select(c => c == '1').ToArray();
 
                 // проверяем количество точек
 
@@ -115,9 +155,9 @@ namespace Tetris
 
                 int BlockNumber = 0;
 
-                for (int X = 0; X < Size; X++)
-                    for (int Y = 0; Y < Size; Y++)
-                        if (Bits[X * Size + Y])
+                for (int X = 0; X < SizeX; X++)
+                    for (int Y = 0; Y < SizeY; Y++)
+                        if (Bits[X * SizeY + Y])
                         {
                             Blocks[BlockNumber] = new TetrisBlock(X, Y);
 
@@ -128,39 +168,25 @@ namespace Tetris
                         }
 
                 if (!FirstRow || !FirstColumn) continue;
+
+                TetrisFigure Figure = new TetrisFigure(Blocks, Chance);
                 
                 // проверяем связность фигуры
 
-                if (CheckConnected)
+                if (!BindingType.HasFlag(Figure.BindingType)) continue;
+
+                // проверяем совпадение фигур и добавляем фигуру или повышаем вероятность фигуры
+
+                TetrisFigure FoundFigure = Figures.FirstOrDefault(f => f.IsSimilar(Figure));
+
+                if (FoundFigure == null)
                 {
-                    // http://algolist.manual.ru/maths/graphs/linked.php
-
-                    // начальное значение - точки не связаны
-                    foreach (TetrisBlock Block in Blocks) Block.Mark = 1;
-
-                    // начинаем проверку связности с этой точки
-                    Blocks[0].Mark = 2;
-
-                    TetrisBlock StartBlock;
-
-                    while ((StartBlock = Blocks.FirstOrDefault(p => p.Mark == 2)) != null)
-                    {
-                        // точка обработана
-                        StartBlock.Mark = 3;
-
-                        // связанные точки ставим в очередь на обработку
-                        foreach (TetrisBlock Block in Blocks.Where(p => p.Mark == 1 && Math.Abs(StartBlock.X - p.X) + Math.Abs(StartBlock.Y - p.Y) == 1)) Block.Mark = 2;
-                    }
-
-                    // остались не связанные точки
-                    if (Blocks.Any(p => p.Mark == 1)) continue;
+                    AddFigure(Figure);
                 }
-
-                // проверяем совпадение фигур и добавляем фигуру
-
-                TetrisFigure Figure = new TetrisFigure(Blocks);
-
-                if (!Figures.Any(f => f.IsSimilar(Figure))) AddFigure(Figure);
+                else if (FoundFigure.Chance < Figure.Chance)
+                {
+                    FoundFigure.Chance = Figure.Chance;
+                }
             }
         }
     }

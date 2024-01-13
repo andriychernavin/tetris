@@ -2,15 +2,21 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:Tetris">
+    <!--xmlns:controls="clr-namespace:System.Windows.Controls;assembly=PresentationFramework"-->
 
     <!-- Color -->
-    <SolidColorBrush x:Key="TetrisPanelBackground" Color="LightGray"/>
-    <SolidColorBrush x:Key="TetrisTankBackgroundActive" Color="White"/>
-    <SolidColorBrush x:Key="TetrisTankBackgroundPassive" Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="TetrisBlockBorderColor" Color="DimGray"/>
+    <SolidColorBrush x:Key="TetrisPanelBackground" Color="Tan"/>
+    <SolidColorBrush x:Key="TetrisTankBackgroundStarted" Color="White"/>
+    <SolidColorBrush x:Key="TetrisTankBackgroundPaused" Color="White"/>
+    <SolidColorBrush x:Key="TetrisTankBackgroundStopped" Color="Linen"/>
+    <SolidColorBrush x:Key="TetrisBlockBorderColor" Color="DarkSlateGray"/>
     <SolidColorBrush x:Key="TetrisLabelColor" Color="DimGray"/>
     <SolidColorBrush x:Key="TetrisValueColor" Color="Black"/>
     <SolidColorBrush x:Key="TetrisMouseOverControl" Color="#EEEEEE"/>
+    
+    <!-- Opacity -->
+    <sys:Double x:Key="FigureShadowOpacity">0.1</sys:Double>
+    <sys:Double x:Key="GameInactiveOpacity">0.5</sys:Double>
 
     <!-- Size -->
     <sys:Double x:Key="SmallButtonSize">20</sys:Double>
@@ -21,13 +27,14 @@
         <Setter Property="Control.Background" Value="{StaticResource TetrisPanelBackground}"/>
     </Style>
     <Style x:Key="TetrisTank">
-        <Setter Property="Control.Background" Value="{StaticResource TetrisTankBackgroundPassive}"/>
+        <!--<Setter Property="Control.Background" Value="{StaticResource TetrisTankBackgroundStopped}"/>
         <Setter Property="Control.Margin" Value="0,10,0,10"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=IsKeyboardFocusWithin, Mode=OneWay}" Value="True">
-                <Setter Property="Control.Background" Value="{StaticResource TetrisTankBackgroundActive}"/>
+                <Setter Property="Control.Background" Value="{StaticResource TetrisTankBackgroundStarted}"/>
             </DataTrigger>
-        </Style.Triggers>
+        </Style.Triggers>-->
+        <Setter Property="Control.Background" Value="{StaticResource TetrisTankBackgroundStopped}"/>
     </Style>
     <Style x:Key="TetrisPanelControls">
         <Setter Property="Control.Background" Value="{StaticResource TetrisPanelBackground}"/>
@@ -41,7 +48,7 @@
     <!-- Figure -->
     <Style TargetType="Rectangle">
         <Setter Property="Stroke" Value="{StaticResource TetrisBlockBorderColor}"/>
-        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="StrokeThickness" Value="2"/>
         <Setter Property="Margin" Value="0, 0, 1, 1"/>
     </Style>
 
@@ -98,8 +105,8 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
-    <!-- TextBox -->
+
+        <!-- TextBox -->
     <Style TargetType="TextBox">
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -220,4 +227,6 @@
     </Style>
     <!-- End of Flat ComboBox -->
 
+    <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+    
 </ResourceDictionary>
