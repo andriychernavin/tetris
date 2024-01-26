@@ -188,7 +188,7 @@ namespace Tetris
             int Value = (int)value;
 
             return true;
-            //return (MinTankHeight<= Value && Value <= MaxTankHeight);
+            //return (MinTankHeight <= Value && Value <= MaxTankHeight);
         }
 
         private static object CorrectTankHeight(DependencyObject d, object value)
@@ -562,6 +562,8 @@ namespace Tetris
 
         private void FinalizeControls()
         {
+            Tetris?.Stop();
+
             Tetris?.Dispose();
 
             Tetris = null;
@@ -1138,6 +1140,20 @@ namespace Tetris
 
         private void TextTankWidth_LostFocus(object sender, RoutedEventArgs e)
         {
+            SetTankWidth();
+        }
+
+        private void TextTankWidth_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return)
+            {
+                SetTankWidth();
+                SetFocus();
+            }
+        }
+
+        private void SetTankWidth()
+        {
             int PrevTankWidth = TankWidth;
 
             TextTankWidth.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
@@ -1167,7 +1183,21 @@ namespace Tetris
 
         private void TextTankHeight_LostFocus(object sender, RoutedEventArgs e)
         {
-            int PrevTankHeight= TankHeight;
+            SetTankHeight();
+        }
+
+        private void TextTankHeight_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return)
+            {
+                SetTankHeight();
+                SetFocus();
+            }
+        }
+
+        private void SetTankHeight()
+        {
+            int PrevTankHeight = TankHeight;
 
             TextTankHeight.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 

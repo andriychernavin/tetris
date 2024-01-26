@@ -114,7 +114,7 @@ namespace Tetris
             if (Properties.Settings.Default.WindowTop != 0) this.Top = Properties.Settings.Default.WindowTop;
             if (Properties.Settings.Default.WindowWidth != 0) this.Width = Properties.Settings.Default.WindowWidth;
             if (Properties.Settings.Default.WindowHeight != 0) this.Height = Properties.Settings.Default.WindowHeight;
-            if (Properties.Settings.Default.WindowMaximized) this.WindowState = WindowState.Maximized;
+            this.WindowState = Properties.Settings.Default.WindowMaximized ? WindowState.Maximized : WindowState.Normal;
         }
 
         private void SaveSettings()
@@ -175,9 +175,11 @@ namespace Tetris
                 SettingsChanged = true;
             }
 
-            if (Properties.Settings.Default.WindowMaximized != (this.WindowState == WindowState.Maximized))
+            bool WindowMaximized = (this.WindowState == WindowState.Maximized);
+
+            if (Properties.Settings.Default.WindowMaximized != WindowMaximized)
             {
-                Properties.Settings.Default.WindowMaximized = true;
+                Properties.Settings.Default.WindowMaximized = WindowMaximized;
                 SettingsChanged = true;
             }
 

@@ -86,7 +86,7 @@
                         <Image Source="pic/Minus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </Button>
                     <TextBox Name="TextTankWidth" Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=TankWidth, Mode=TwoWay, UpdateSourceTrigger=Explicit}" 
-                        Focusable="True" LostFocus="TextTankWidth_LostFocus"/>
+                        Focusable="True" LostFocus="TextTankWidth_LostFocus" KeyDown="TextTankWidth_KeyDown"/>
                     <Button Name="ButtonWidthPlus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonWidthPlus_Click">
                         <Image Source="pic/Plus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </Button>
@@ -99,7 +99,7 @@
                         <Image Source="pic/Minus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </Button>
                     <TextBox Name="TextTankHeight" Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:TetrisControl}}, Path=TankHeight, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
-                        Focusable="True" LostFocus="TextTankHeight_LostFocus"/>
+                        Focusable="True" LostFocus="TextTankHeight_LostFocus" KeyDown="TextTankHeight_KeyDown"/>
                     <Button Name="ButtonHeightPlus" Width="{StaticResource SmallButtonSize}" Height="{StaticResource SmallButtonSize}" HorizontalAlignment="Center" Focusable="False" Click="ButtonHeightPlus_Click">
                         <Image Source="pic/Plus.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </Button>
